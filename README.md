@@ -46,7 +46,7 @@ https://i.tochka.com/bank/app/integration
 - `incomingPaymentLog` - если требуется вести лог (будет сохранён в файл `incoming_payment_log.txt`)
 - `incomingPaymentAccounts` - массив с номерами ваших счетов
 - `telegramBotToken` - Токен вашего телеграм бота (если бота нет, создайте новый через [BotFather](https://t.me/BotFather))
-- `telegramBotTokenChannelId` - массив с номерами ваших счетов
+- `telegramBotTokenChannelId` - ID или @username вашего телеграм канала
 
 ---
 
