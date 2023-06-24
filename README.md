@@ -10,6 +10,8 @@
 
 Уведомления о поступлении средств в "Точка Банк" для Telegram.
 
+<img width="387" alt="image" src="https://github.com/djpont/php-tochka-bank-telegram-notifications/assets/34692754/35e6c555-ef2a-4c61-ae12-94684a85f778">
+
 ---
 
 ### Как добавить к себе
