@@ -22,7 +22,7 @@ class TochkaBank {
 		'incomingPayment', // Обычные платежи
 		'incomingSbpPayment', // СБП платежи
 	];
-	private $scope = 'balances'; // Требыемые разрешения от клиента
+	private $scope = 'balances statements sbp'; // Требыемые разрешения от клиента
 
 	private $configFile = 'config.php'; // Файл с конфигом
 	private $accessTokensFile = 'access_tokens.php'; // Файл, где будут храниться токены
@@ -101,6 +101,7 @@ class TochkaBank {
 			CURLOPT_HTTPHEADER => array('Content-Type: application/x-www-form-urlencoded'),
 			CURLOPT_RETURNTRANSFER => true
 		);
+		curl_reset($this->ch);
 		curl_setopt_array($this->ch, $options);
 		$response = curl_exec($this->ch);
 		$payload = $this->decodeJWT($response);
@@ -141,6 +142,7 @@ class TochkaBank {
 			CURLOPT_HTTPHEADER => array('Content-Type: application/x-www-form-urlencoded'),
 			CURLOPT_RETURNTRANSFER => true
 		);
+		curl_reset($this->ch);
 		curl_setopt_array($this->ch, $options);
 		$response = curl_exec($this->ch);
 		$data = json_decode($response, true);
@@ -157,11 +159,13 @@ class TochkaBank {
 	 */
 	private function getRedirectForAuthorization(string $authToken): string {
 		$url = 'https://enter.tochka.com/uapi/v1.0/consents';
-		$expirationDateTime = date('Y-m-d\TH:i:sP', strtotime('+200 hour'));
+		$expirationDateTime = date('Y-m-d\TH:i:sP', strtotime('+8760 hour'));
 		$data = array(
 			'Data' => array(
 				'permissions' => array(
 					'ReadBalances',
+					'ReadStatements',
+					'ReadSBPData',
 				),
 				'expirationDateTime' => $expirationDateTime
 			)
@@ -177,6 +181,7 @@ class TochkaBank {
 			CURLOPT_HTTPHEADER => $headers,
 			CURLOPT_RETURNTRANSFER => true
 		);
+		curl_reset($this->ch);
 		curl_setopt_array($this->ch, $options);
 		$response = curl_exec($this->ch);
 		$data = json_decode($response, true);
@@ -412,42 +417,62 @@ class TochkaBank {
 	 */
 	public function incomingPaymentNotification(string $jwt): void {
 		$data = $this->decodeJWT($jwt);
-		if (!isset($data['SidePayer']) || !isset($data['SideRecipient'])) {
-			throw new Error('Ошибка обработки уведомления о платеже');
-		}
-		$payerAccount = $data['SidePayer']['account'];
-		$payerName = $data['SidePayer']['name'];
-		$info = $data['SideRecipient'];
-		$recipientAccount = $info['account'];
-		$recipientName = $info['name'];
-		$amount = $info['amount'];
-		$notify =
-			$payerAccount !== $recipientAccount &&
-			$payerName !== $recipientName &&
-			in_array($recipientAccount, $this->incomingPaymentAccounts) &&
-			(
-				!$this->incomingPaymentAmountLimit ||
-				(int)$amount <= $this->incomingPaymentAmountLimit
-			);
-		if ($notify) {
+		// Уведомление incomingPayment
+		if (isset($data['SidePayer']) && isset($data['SideRecipient'])) {
+			$payerAccount = $data['SidePayer']['account'];
+			$payerName = $data['SidePayer']['name'];
+			$info = $data['SideRecipient'];
+			$recipientAccount = $info['account'];
+			$recipientName = $info['name'];
+			$amount = $info['amount'];
 			$currency = $info['currency'] == 'RUB' ? '₽' : ' ' . $info['currency'];
+			$notify =
+				$payerAccount !== $recipientAccount &&
+				$payerName !== $recipientName &&
+				in_array($recipientAccount, $this->incomingPaymentAccounts) &&
+				(
+					!$this->incomingPaymentAmountLimit ||
+					(int)$amount <= $this->incomingPaymentAmountLimit
+				);
 			$comment = $data['purpose'] ?? '';
 			$comment = $this->parseIncomingPaymentComment($comment);
-			$message = '💰 <b>' . $this->formatAmount($amount) . "</b>$currency на Точку\r\n$comment";
-			$this->telegramBotSendMessage($message);
-			$this->incomingPaymentLoging($jwt, $message);
+			$message = '💰 <b>' . $this->formatAmount($amount)
+				. "</b>$currency на Точку\r\n$comment";
+			if ($notify) {
+				$this->telegramBotSendMessage($message);
+				$this->incomingPaymentLoging($jwt, $message);
+			}
+			exit;
+		// Уведомление incomingSbpPayment
+		} elseif (isset($data['qrcId'])) {
+			$amount = $data['amount'];
+			$currency = '₽';
+			$payerName = $data['payerName'];
+			$payerPhone = $data['payerMobileNumber'];
+			$message = '💰 <b>' . $this->formatAmount($amount)
+				. "</b>$currency на Точку\r\n$payerName\r\n$payerPhone";
+			$notify =
+				!$this->incomingPaymentAmountLimit ||
+				(int)$amount <= $this->incomingPaymentAmountLimit;
+			if ($notify) {
+				$this->telegramBotSendMessage($message);
+				$this->incomingPaymentLoging($jwt, $message);
+			}
+			exit;
 		}
+		$this->incomingPaymentLoging($jwt);
+		throw new Error('Ошибка обработки уведомления о платеже');
 	}
 
 	/**
 	 * Пишем полученные данные в лог
 	 */
-	private function incomingPaymentLoging(string $jwt, string $message):void {
-		if($this->incomingPaymentLog){
+	private function incomingPaymentLoging(string $jwt, string $message = ''): void {
+		if ($this->incomingPaymentLog) {
 			$file = $this->incomingPaymentLogFile;
 			$date = date('Y-m-d H-i-s');
-			$text = "\r\n".$date."\r\n".$jwt."\r\n";
-			if($message){
+			$text = "\r\n" . $date . "\r\n" . $jwt . "\r\n";
+			if ($message) {
 				$text .= "$message\r\n";
 			}
 			file_put_contents($file, $text, FILE_APPEND);
