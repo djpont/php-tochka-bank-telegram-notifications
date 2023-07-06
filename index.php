@@ -15,7 +15,7 @@ if ($bank->checkAuthorization()) {
 	echo 'Авторизация прошла успешно.<br>';
 	echo 'Проверяю вебхук.<br>';
 	if(!$bank->checkWebHooks()){
-		echo 'Вебхук треюуется обновить.<br>Удаляю вебхук...<br>';
+		echo 'Вебхук требуется обновить.<br>Удаляю вебхук...<br>';
 		$bank->deleteWebHook();
 		echo 'Создаю новый вебхук...<br>';
 		$bank->createWebHook();
