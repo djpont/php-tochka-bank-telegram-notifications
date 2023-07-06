@@ -6,12 +6,11 @@
 ![tochka](https://img.shields.io/badge/tochka-1.37.15-blue)
 [![Authors](https://img.shields.io/badge/Authors-djpont-blue)](https://github.com/djpont)
 
-</div>
-
 Уведомления о поступлении средств в "Точка Банк" для Telegram.
 
-![image](https://github.com/djpont/php-tochka-bank-telegram-notifications/assets/34692754/16bc9c6f-a638-4c0b-8994-a13b28368bca)
+<img width=33% src='https://github.com/djpont/php-tochka-bank-telegram-notifications/assets/34692754/16bc9c6f-a638-4c0b-8994-a13b28368bca' />
 
+</div>
 
 ---
 
@@ -50,6 +49,8 @@ https://i.tochka.com/bank/app/integration
 - `incomingPaymentAccounts` - массив с номерами ваших счетов
 - `telegramBotToken` - Токен вашего телеграм бота (если бота нет, создайте новый через [BotFather](https://t.me/BotFather))
 - `telegramBotTokenChannelId` - ID или @username вашего телеграм канала
+
+_Подсказка: если не знаете ID приватного канала, можно временно сделать канал публичным, присвоить ему @название, любым способом на @название отправить через бота сообщение и в ответе получите ID._
 
 ---
 
