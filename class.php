@@ -232,7 +232,6 @@ class TochkaBank {
 	 * Метод сохранения токенов в файал
 	 */
 	private function saveAccessTokens(array $data): void {
-		// echo '<pre>'.print_r($data, true).'</pre>';
 		if (
 			!isset($data['refresh_token']) ||
 			!isset($data['access_token'])
@@ -290,6 +289,7 @@ class TochkaBank {
 				'Authorization: ' . $authorizationToken,
 			],
 		);
+		curl_reset($this->ch);
 		curl_setopt_array($this->ch, $options);
 		$response = curl_exec($this->ch);
 		$data = json_decode($response, true);
@@ -335,6 +335,7 @@ class TochkaBank {
 				'Content-Type: application/json'
 			],
 		);
+		curl_reset($this->ch);
 		curl_setopt_array($this->ch, $options);
 		$response = curl_exec($this->ch);
 		$data = json_decode($response, true);
@@ -365,6 +366,7 @@ class TochkaBank {
 				'Authorization: ' . $authorizationToken,
 			],
 		);
+		curl_reset($this->ch);
 		curl_setopt_array($this->ch, $options);
 		$response = curl_exec($this->ch);
 		$data = json_decode($response, true);
@@ -388,6 +390,7 @@ class TochkaBank {
 				'Authorization: ' . $authorizationToken,
 			],
 		);
+		curl_reset($this->ch);
 		curl_setopt_array($this->ch, $options);
 		$response = curl_exec($this->ch);
 		$data = json_decode($response, true);
@@ -413,11 +416,14 @@ class TochkaBank {
 			throw new Error('Ошибка обработки уведомления о платеже');
 		}
 		$payerAccount = $data['SidePayer']['account'];
+		$payerName = $data['SidePayer']['name'];
 		$info = $data['SideRecipient'];
 		$recipientAccount = $info['account'];
+		$recipientName = $info['name'];
 		$amount = $info['amount'];
 		$notify =
 			$payerAccount !== $recipientAccount &&
+			$payerName !== $recipientName &&
 			in_array($recipientAccount, $this->incomingPaymentAccounts) &&
 			(
 				!$this->incomingPaymentAmountLimit ||
@@ -519,6 +525,7 @@ class TochkaBank {
 			CURLOPT_POSTFIELDS => $data,
 			CURLOPT_RETURNTRANSFER => true
 		);
+		curl_reset($this->ch);
 		curl_setopt_array($this->ch, $options);
 		curl_exec($this->ch);
 	}
