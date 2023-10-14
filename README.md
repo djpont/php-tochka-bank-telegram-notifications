@@ -1,41 +1,74 @@
-<div align=center> 
+<div align='center'>
 
-## Клиент системы аренды сельскохозяйственной техники
+# Tochka Bank Telegram Notifications
 
-Разработан в рамках Акселератора Яндекс Практикума 🚀
+![php](https://img.shields.io/badge/php-7.3-blue)
+![tochka](https://img.shields.io/badge/tochka-1.37.15-blue)
+[![Authors](https://img.shields.io/badge/Authors-djpont-blue)](https://github.com/djpont)
 
-![next](https://img.shields.io/badge/Next-13.4.10-blue)
-![react](https://img.shields.io/badge/React-18.2.0-blue)
-![typescript](https://img.shields.io/badge/Typescript-5.1.6-blue)
-![storybook](https://img.shields.io/badge/Storybook-7.1.0-blue)
-![jest](https://img.shields.io/badge/Jest-29.6.1-blue)
-![node](https://img.shields.io/badge/Node-18-blue)
+Уведомления о поступлении средств в "Точка Банк" для Telegram.
+
+<img width=33% src='https://github.com/djpont/php-tochka-bank-telegram-notifications/assets/34692754/16bc9c6f-a638-4c0b-8994-a13b28368bca' />
 
 </div>
 
-Development next server:
+---
 
-```bash
-npm run dev
-```
+### Как добавить к себе
 
-Storybook:
+Ваш сервер должен поддерживать SSL, достаточно самоподписного сертификата.
 
-```bash
-npm run storybook
-```
+Разместите файлы в отдельной директории на своём сервере, например:
 
-## Learn More
+`https://example.ru/tochka/`
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Интеграция с "Точка Банк"
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+В личном кабинете "Точка Банк" перейдите в раздел **Сервисы** -> **Интеграции** -> **Разработчикам** -> **Перейти к подключению**
 
-## Deploy on Vercel
+https://i.tochka.com/bank/app/integration
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- В поле `Redirect url` укажите адрес до файла `tochka.php`, например `https://example.ru/tochka/tochka.php`
+- В поле `Название` укажиле любое название вашего приложение (будет видно только вам).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+В ответ получите clientId и clientSecret - сохраните их, они пригодятся для настроки.
+
+---
+
+### Настройка
+
+Укажите параметры в файле `config.php`
+
+- `clientId` и `clientSecret` - полученные в предыдущем пункте
+- `receiveCodeUrl` - должен совпадать с указанным в интеграции с "Точка Банк"
+- `afterAuthUrl` - страничка, куда перенаправляем после авторизации
+- `webhookUrl` - адрес до файла `incoming_payment.php`
+- `incomingPaymentLog` - если требуется вести лог (будет сохранён в файл `incoming_payment_log.txt`)
+- `incomingPaymentAccounts` - массив с номерами ваших счетов
+- `telegramBotToken` - Токен вашего телеграм бота (если бота нет, создайте новый через [BotFather](https://t.me/BotFather))
+- `telegramBotTokenChannelId` - ID или @username вашего телеграм канала
+
+_Подсказка: если не знаете ID приватного канала, можно временно сделать канал публичным, присвоить ему @название, любым способом на @название отправить через бота сообщение и в ответе получите ID._
+
+---
+
+### Авторизация
+
+Перейдите по адресу директории, скрипт проверит текущую авторизацию и вебхуки.
+
+`https://example.ru/tochka`
+
+В случае необходимости появится ссылка для авторизации.
+
+Тут же можно получить информацию о состоянии вебхуков.
+
+Данные об авторизации хранятся локально в файле `access_tokens.php`.
+Если хотите изменить локигу и сохранять токены в БД, добавьте код в методы `saveAccessTokens` и `loadAccessTokens` класса `TochkaBank`.
+
+---
+
+### Контакты
+
+Телеграм автора: [@djpont](https://t.me/djpont)
